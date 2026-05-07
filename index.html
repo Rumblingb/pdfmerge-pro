@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDFMerge Pro</title>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.1/Sortable.min.js"></script>
+<style>
+:root {
+  --bg: #0d1117;
+  --bg-card: #161b22;
+  --bg-input: #1c2129;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-dim: #8b949e;
+  --accent: #58a6ff;
+  --accent-hover: #79c0ff;
+  --accent-glow: rgba(88,166,255,0.15);
+  --green: #3fb950;
+  --green-bg: rgba(63,185,80,0.12);
+  --orange: #d2991d;
+  --orange-bg: rgba(210,153,29,0.12);
+  --red: #f85149;
+  --red-bg: rgba(248,81,73,0.12);
+  --premium: #d2a8ff;
+  --premium-bg: rgba(210,168,255,0.12);
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 0 40px rgba(0,0,0,0.4);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ── */
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+/* ── Header ── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 24px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.logo svg { flex-shrink: 0; }
+.badge-premium {
+  background: linear-gradient(135deg, #8b5cf6, #d2a8ff);
+  color: #0d1117;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  border: none;
+  white-space: nowrap;
+}
+.badge-premium:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(139,92,246,0.4);
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.card-header {
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Drop Zone ── */
+.dropzone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, transform 0.1s;
+  position: relative;
+}
+.dropzone:hover, .dropzone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  transform: scale(1.01);
+}
+.dropzone-icon {
+  font-size: 2.4rem;
+  margin-bottom: 8px;
+  opacity: 0.7;
+}
+.dropzone-text {
+  font-weight: 500;
+  color: var(--text);
+}
+.dropzone-sub {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.dropzone input[type=file] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* ── File List ── */
+.file-list { list-style: none; }
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: grab;
+}
+.file-item:active { cursor: grabbing; }
+.file-item:hover { border-color: var(--accent); }
+.file-item.sortable-ghost {
+  opacity: 0.35;
+  border-color: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.file-item.sortable-chosen {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  border-color: var(--accent);
+}
+.drag-handle {
+  color: var(--text-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  user-select: none;
+  cursor: grab;
+}
+.file-index {
+  width: 24px;
+  height: 24px;
+  background: var(--accent);
+  color: #0d1117;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+.file-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.file-meta {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+.file-remove {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
+}
+.file-remove:hover { color: var(--red); background: var(--red-bg); }
+.file-actions-row {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.btn-icon {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  cursor: pointer;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+}
+.btn-icon:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+.btn-icon:disabled { opacity: 0.3; cursor: default; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary {
+  background: var(--accent);
+  color: #0d1117;
+  border-color: var(--accent);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 4px 20px var(--accent-glow);
+}
+.btn-outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.btn-danger {
+  background: transparent;
+  border-color: var(--red);
+  color: var(--red);
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--red-bg);
+}
+.btn-premium {
+  background: linear-gradient(135deg, #7c3aed, #a855f7);
+  color: #fff;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+.btn-premium:hover:not(:disabled) {
+  box-shadow: 0 4px 24px rgba(139,92,246,0.5);
+}
+.btn-full { width: 100%; }
+.btn-sm { padding: 6px 14px; font-size: 0.8rem; }
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+/* ── Premium Features Section ── */
+.premium-section {
+  opacity: 0.6;
+  position: relative;
+}
+.premium-section.locked { opacity: 0.5; }
+.premium-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+.premium-lock {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--premium);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.premium-lock:hover {
+  border-color: var(--premium);
+  box-shadow: 0 0 16px rgba(210,168,255,0.2);
+}
+
+/* ── Range / Input ── */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.input-group label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.input-group input, .input-group select {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+.input-group input:focus, .input-group select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.input-row {
+  display: flex;
+  gap: 10px;
+}
+.input-row .input-group { flex: 1; }
+
+/* ── Toast ── */
+.toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 18px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  animation: slideIn 0.25s ease;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  max-width: 360px;
+}
+.toast.error { border-color: var(--red); color: var(--red); }
+.toast.success { border-color: var(--green); color: var(--green); }
+@keyframes slideIn {
+  from { transform: translateX(120%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* ── Progress ── */
+.progress-bar {
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 10px;
+  display: none;
+}
+.progress-bar.active { display: block; }
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.3s;
+}
+
+/* ── Empty State ── */
+.empty-state {
+  text-align: center;
+  padding: 24px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+/* ── Modal ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--shadow);
+  animation: scaleIn 0.2s ease;
+}
+.modal h2 { font-size: 1.3rem; margin-bottom: 6px; }
+.modal .price {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 12px 0;
+  background: linear-gradient(135deg, #a855f7, #d2a8ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.modal .features-list {
+  list-style: none;
+  margin: 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.modal .features-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+.modal .features-list li::before {
+  content: '✓';
+  color: var(--green);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.modal .btn-row { margin-top: 20px; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .container { padding: 12px 10px 40px; }
+  .card { padding: 16px 14px; }
+  .dropzone { padding: 28px 14px; }
+  .btn { padding: 10px 16px; font-size: 0.85rem; }
+  .btn-row { flex-direction: column; }
+  .btn-full-mobile { width: 100%; }
+  .file-item { padding: 8px 10px; gap: 8px; }
+  .file-name { font-size: 0.82rem; }
+  .input-row { flex-direction: column; }
+  .header { padding: 12px 0 16px; }
+  .logo { font-size: 1.25rem; }
+}
+
+/* ── Tool Section Tabs ── */
+.tool-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.tool-tab {
+  padding: 7px 14px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 20px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tool-tab:hover { border-color: var(--accent); color: var(--text); }
+.tool-tab.active { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+
+/* ── Footer ── */
+.footer {
+  text-align: center;
+  padding: 30px 0 10px;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ── Header ── -->
+  <div class="header">
+    <div class="logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect x="2" y="4" width="28" height="24" rx="3" stroke="#58a6ff" stroke-width="2" fill="none"/>
+        <path d="M8 12h16M8 17h12M8 22h16" stroke="#58a6ff" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      PDFMerge <span style="font-weight:400;color:var(--text-dim)">Pro</span>
+    </div>
+    <button class="badge-premium" onclick="showPremiumModal()" id="premiumBadge">
+      ★ UPGRADE
+    </button>
+  </div>
+
+  <!-- ── Tool Tabs ── -->
+  <div class="tool-tabs">
+    <button class="tool-tab active" data-tab="merge" onclick="switchTab('merge')">📄 Merge PDFs</button>
+    <button class="tool-tab locked-tab" data-tab="split" onclick="switchTab('split')">✂️ Split PDF</button>
+    <button class="tool-tab locked-tab" data-tab="extract" onclick="switchTab('extract')">📑 Extract Pages</button>
+    <button class="tool-tab locked-tab" data-tab="compress" onclick="switchTab('compress')">🗜️ Compress</button>
+  </div>
+
+  <!-- ── MERGE TAB ── -->
+  <div id="tab-merge" class="tab-content">
+    <div class="card">
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">📂</div>
+        <div class="dropzone-text">Drag &amp; drop PDF files here</div>
+        <div class="dropzone-sub">or click to browse — multiple files supported</div>
+        <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple>
+      </div>
+      <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="card" id="fileListCard">
+      <div class="card-header">📋 Files to merge (<span id="fileCount">0</span>)</div>
+      <ul class="file-list" id="fileList">
+        <li class="empty-state">No PDFs added yet. Drop files above to get started.</li>
+      </ul>
+      <div class="btn-row" style="margin-top:14px">
+        <button class="btn btn-danger btn-sm" id="btnClearAll" onclick="clearAll()" disabled>Clear All</button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" id="btnMerge" onclick="mergePDFs()" disabled>
+      ⬇️ Merge &amp; Download
+    </button>
+  </div>
+
+  <!-- ── SPLIT TAB ── -->
+  <div id="tab-split" class="tab-content" style="display:none">
+    <div class="card premium-section locked" id="splitCard">
+      <div class="premium-overlay" id="splitOverlay">
+        <button class="premium-lock" onclick="showPremiumModal()">🔒 Premium — Unlock</button>
+      </div>
+      <div class="card-header">✂️ Split PDF by Page Ranges</div>
+      <div class="dropzone" id="dropzoneSplit">
+        <div class="dropzone-text">Upload a PDF to split</div>
+        <div class="dropzone-sub">Select this PDF then define page ranges below</div>
+        <input type="file" id="splitFileInput" accept=".pdf,application/pdf">
+      </div>
+      <div class="input-group" style="margin-top:14px">
+        <label>Page Ranges (e.g. 1-3, 5-8, 10)</label>
+        <input type="text" id="splitRanges" placeholder="1-3, 5-8, 10" disabled>
+      </div>
+      <button class="btn btn-premium btn-full" id="btnSplit" onclick="splitPDF()" disabled>Split &amp; Download All</button>
+    </div>
+  </div>
+
+  <!-- ── EXTRACT TAB ── -->
+  <div id="tab-extract" class="tab-content" style="display:none">
+    <div class="card premium-section locked" id="extractCard">
+      <div class="premium-overlay" id="extractOverlay">
+        <button class="premium-lock" onclick="showPremiumModal()">🔒 Premium — Unlock</button>
+      </div>
+      <div class="card-header">📑 Extract Specific Pages</div>
+      <div class="dropzone" id="dropzoneExtract">
+        <div class="dropzone-text">Upload a PDF to extract from</div>
+        <div class="dropzone-sub">Select pages to pull out into a new PDF</div>
+        <input type="file" id="extractFileInput" accept=".pdf,application/pdf">
+      </div>
+      <div class="input-group" style="margin-top:14px">
+        <label>Pages to extract (e.g. 1, 3, 5-7)</label>
+        <input type="text" id="extractPages" placeholder="1, 3, 5-7" disabled>
+      </div>
+      <button class="btn btn-premium btn-full" id="btnExtract" onclick="extractPages()" disabled>Extract &amp; Download</button>
+    </div>
+  </div>
+
+  <!-- ── COMPRESS TAB ── -->
+  <div id="tab-compress" class="tab-content" style="display:none">
+    <div class="card premium-section locked" id="compressCard">
+      <div class="premium-overlay" id="compressOverlay">
+        <button class="premium-lock" onclick="showPremiumModal()">🔒 Premium — Unlock</button>
+      </div>
+      <div class="card-header">🗜️ Compress PDF</div>
+      <div class="dropzone" id="dropzoneCompress">
+        <div class="dropzone-text">Upload a PDF to compress</div>
+        <div class="dropzone-sub">Reduce file size by re-encoding (client-side)</div>
+        <input type="file" id="compressFileInput" accept=".pdf,application/pdf">
+      </div>
+      <div id="compressInfo" style="margin-top:14px;font-size:0.85rem;color:var(--text-dim);display:none">
+        Original: <span id="compressOriginal">—</span> &rarr; Compressed: <span id="compressResult">—</span>
+      </div>
+      <button class="btn btn-premium btn-full" id="btnCompress" onclick="compressPDF()" disabled style="margin-top:14px">Compress &amp; Download</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    PDFMerge Pro &mdash; All processing happens in your browser. Your files never leave your device.
+  </div>
+</div>
+
+<!-- ── Toast Container ── -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ── Premium Modal ── -->
+<div class="modal-overlay" id="premiumModal" style="display:none" onclick="if(event.target===this)hidePremiumModal()">
+  <div class="modal">
+    <h2>🚀 Go Premium</h2>
+    <div class="price">$12 <span style="font-size:0.9rem;font-weight:400;color:var(--text-dim);-webkit-text-fill-color:var(--text-dim)">one-time</span></div>
+    <p style="color:var(--text-dim);font-size:0.85rem">Unlock all features forever. No subscription.</p>
+    <ul class="features-list">
+      <li>✂️ Split PDF by page ranges</li>
+      <li>📑 Extract specific pages</li>
+      <li>🗜️ Compress PDF files</li>
+      <li>🔄 Unlimited usage of all tools</li>
+      <li>💾 Priority processing</li>
+    </ul>
+    <div class="btn-row">
+      <button class="btn btn-premium btn-full" onclick="purchasePremium()">
+        💳 Unlock for $12
+      </button>
+      <button class="btn btn-outline btn-full" onclick="hidePremiumModal()">Maybe Later</button>
+    </div>
+    <p style="font-size:0.7rem;color:var(--text-dim);text-align:center;margin-top:14px">
+      🔒 Secure payment · Instant unlock · 30-day refund
+    </p>
+  </div>
+</div>
+
+<script>
+/* ────────────────────────────────────
+   PDFMerge Pro — Client-Side PDF Tools
+   Uses PDF-lib.js for all processing
+   ──────────────────────────────────── */
+
+// ── State ──
+const PDFLib = window.PDFLib;
+let mergeFiles = [];        // {name, data: ArrayBuffer, pages: number}
+let currentTab = 'merge';
+let isPremium = false;
+
+// Premium tool file caches (one file at a time)
+let splitFileData = null;
+let extractFileData = null;
+let compressFileData = null;
+
+// ── DOM Refs ──
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => document.querySelectorAll(sel);
+
+// ── Toast ──
+function toast(msg, type='') {
+  const container = $('#toastContainer');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }, 3000);
+}
+
+// ── Progress ──
+function showProgress() { $('#progressBar').classList.add('active'); $('#progressFill').style.width='0%'; }
+function setProgress(pct) { $('#progressFill').style.width = Math.min(100,pct)+'%'; }
+function hideProgress() { setTimeout(()=>$('#progressBar').classList.remove('active'),600); }
+
+// ── Tab Switching ──
+function switchTab(tab) {
+  currentTab = tab;
+  $$('.tool-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  $$('.tab-content').forEach(t => t.style.display='none');
+  $(`#tab-${tab}`).style.display='';
+
+  if (!isPremium && tab !== 'merge') {
+    // locked — premium overlay already shown via CSS
+  }
+}
+
+// ── File Size Formatting ──
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/1048576).toFixed(1) + ' MB';
+}
+
+// ── Parse Page Range String ──
+function parseRanges(str, maxPages) {
+  const pages = new Set();
+  const parts = str.split(',').map(s => s.trim()).filter(Boolean);
+  for (const part of parts) {
+    if (part.includes('-')) {
+      const [a,b] = part.split('-').map(Number);
+      if (isNaN(a) || isNaN(b) || a<1 || b>maxPages || a>b) return null;
+      for (let i=a; i<=b; i++) pages.add(i);
+    } else {
+      const n = Number(part);
+      if (isNaN(n) || n<1 || n>maxPages) return null;
+      pages.add(n);
+    }
+  }
+  return pages.size ? [...pages].sort((a,b)=>a-b) : null;
+}
+
+// ── Render Merge File List ──
+function renderMergeList() {
+  const list = $('#fileList');
+  const countEl = $('#fileCount');
+  countEl.textContent = mergeFiles.length;
+
+  if (mergeFiles.length === 0) {
+    list.innerHTML = '<li class="empty-state">No PDFs added yet. Drop files above to get started.</li>';
+    $('#btnClearAll').disabled = true;
+    $('#btnMerge').disabled = true;
+    return;
+  }
+
+  $('#btnClearAll').disabled = false;
+  $('#btnMerge').disabled = false;
+
+  list.innerHTML = mergeFiles.map((f, i) => `
+    <li class="file-item" data-index="${i}">
+      <span class="drag-handle">⋮⋮</span>
+      <span class="file-index">${i+1}</span>
+      <div class="file-info">
+        <div class="file-name" title="${escapeHtml(f.name)}">${escapeHtml(f.name)}</div>
+        <div class="file-meta">${f.pages} page${f.pages!==1?'s':''} · ${fmtSize(f.data.byteLength)}</div>
+      </div>
+      <button class="btn-icon" onclick="removeFile(${i})" title="Remove">✕</button>
+    </li>
+  `).join('');
+
+  // Enable SortableJS for drag reorder
+  if (window.Sortable) {
+    new Sortable(list, {
+      animation: 150,
+      handle: '.drag-handle',
+      ghostClass: 'sortable-ghost',
+      chosenClass: 'sortable-chosen',
+      onEnd: function(evt) {
+        const moved = mergeFiles.splice(evt.oldIndex, 1)[0];
+        mergeFiles.splice(evt.newIndex, 0, moved);
+        renderMergeList();
+      }
+    });
+  }
+}
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+// ── Add PDF files to merge list ──
+async function addFiles(fileList) {
+  const files = Array.from(fileList).filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+  if (files.length === 0) { toast('Please select PDF files only.', 'error'); return; }
+
+  showProgress();
+  let loaded = 0;
+  for (const file of files) {
+    setProgress((loaded / files.length) * 100);
+    try {
+      const data = await file.arrayBuffer();
+      const pdfDoc = await PDFLib.PDFDocument.load(data, { ignoreEncryption: true });
+      const pages = pdfDoc.getPageCount();
+      mergeFiles.push({ name: file.name, data, pages });
+      loaded++;
+    } catch(e) {
+      toast(`Failed to read "${file.name}": ${e.message}`, 'error');
+    }
+  }
+  setProgress(100);
+  hideProgress();
+  renderMergeList();
+  if (loaded > 0) toast(`Added ${loaded} PDF${loaded>1?'s':''}.`, 'success');
+}
+
+function removeFile(index) {
+  mergeFiles.splice(index, 1);
+  renderMergeList();
+}
+
+function clearAll() {
+  mergeFiles = [];
+  renderMergeList();
+  toast('All files cleared.', 'success');
+}
+
+// ── Merge PDFs ──
+async function mergePDFs() {
+  if (mergeFiles.length < 2) { toast('Add at least 2 PDFs to merge.', 'error'); return; }
+
+  showProgress();
+  setProgress(5);
+  $('#btnMerge').disabled = true;
+  $('#btnMerge').textContent = '⏳ Merging...';
+
+  try {
+    const mergedDoc = await PDFLib.PDFDocument.create();
+
+    for (let i = 0; i < mergeFiles.length; i++) {
+      const srcDoc = await PDFLib.PDFDocument.load(mergeFiles[i].data, { ignoreEncryption: true });
+      const pageIndices = srcDoc.getPageIndices();
+      const copiedPages = await mergedDoc.copyPages(srcDoc, pageIndices);
+      copiedPages.forEach(p => mergedDoc.addPage(p));
+      setProgress(5 + ((i+1)/mergeFiles.length)*85);
+    }
+
+    setProgress(95);
+    const mergedBytes = await mergedDoc.save();
+    setProgress(100);
+
+    const blob = new Blob([mergedBytes], { type: 'application/pdf' });
+    downloadBlob(blob, 'merged.pdf');
+    toast(`Merged ${mergeFiles.length} PDFs — ${fmtSize(mergedBytes.byteLength)}`, 'success');
+  } catch(e) {
+    toast(`Merge failed: ${e.message}`, 'error');
+  } finally {
+    hideProgress();
+    $('#btnMerge').disabled = false;
+    $('#btnMerge').textContent = '⬇️ Merge & Download';
+  }
+}
+
+// ── Helper: download blob ──
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Premium: Split PDF ──
+async function splitPDF() {
+  if (!isPremium) { showPremiumModal(); return; }
+  if (!splitFileData) { toast('Upload a PDF first.', 'error'); return; }
+  const rangesStr = $('#splitRanges').value.trim();
+  if (!rangesStr) { toast('Enter page ranges.', 'error'); return; }
+
+  showProgress();
+  setProgress(10);
+  $('#btnSplit').disabled = true;
+  $('#btnSplit').textContent = '⏳ Splitting...';
+
+  try {
+    const srcDoc = await PDFLib.PDFDocument.load(splitFileData, { ignoreEncryption: true });
+    const maxPages = srcDoc.getPageCount();
+    const rangeParts = rangesStr.split(',').map(s => s.trim()).filter(Boolean);
+    const ranges = [];
+
+    for (const part of rangeParts) {
+      if (part.includes('-')) {
+        const [a,b] = part.split('-').map(Number);
+        if (isNaN(a) || isNaN(b) || a<1 || b>maxPages || a>b) {
+          toast(`Invalid range: ${part}`, 'error'); throw new Error('Invalid range');
+        }
+        ranges.push({ start: a-1, end: b-1, label: `pages-${a}-${b}` });
+      } else {
+        const n = Number(part);
+        if (isNaN(n) || n<1 || n>maxPages) {
+          toast(`Invalid page: ${part}`, 'error'); throw new Error('Invalid page');
+        }
+        ranges.push({ start: n-1, end: n-1, label: `page-${n}` });
+      }
+    }
+
+    const total = ranges.length;
+    for (let i = 0; i < total; i++) {
+      const r = ranges[i];
+      const newDoc = await PDFLib.PDFDocument.create();
+      const pages = await newDoc.copyPages(srcDoc, Array.from({length: r.end-r.start+1}, (_,j)=>r.start+j));
+      pages.forEach(p => newDoc.addPage(p));
+      const bytes = await newDoc.save();
+      const blob = new Blob([bytes], { type: 'application/pdf' });
+      downloadBlob(blob, `${r.label}.pdf`);
+      setProgress(10 + ((i+1)/total)*85);
+      // small delay between downloads
+      await new Promise(r => setTimeout(r, 150));
+    }
+
+    setProgress(100);
+    toast(`Split into ${total} PDF${total>1?'s':''}.`, 'success');
+  } catch(e) {
+    if (e.message !== 'Invalid range' && e.message !== 'Invalid page') {
+      toast(`Split failed: ${e.message}`, 'error');
+    }
+  } finally {
+    hideProgress();
+    $('#btnSplit').disabled = false;
+    $('#btnSplit').textContent = 'Split & Download All';
+  }
+}
+
+// ── Premium: Extract Pages ──
+async function extractPages() {
+  if (!isPremium) { showPremiumModal(); return; }
+  if (!extractFileData) { toast('Upload a PDF first.', 'error'); return; }
+  const pagesStr = $('#extractPages').value.trim();
+  if (!pagesStr) { toast('Enter pages to extract.', 'error'); return; }
+
+  showProgress();
+  setProgress(10);
+  $('#btnExtract').disabled = true;
+  $('#btnExtract').textContent = '⏳ Extracting...';
+
+  try {
+    const srcDoc = await PDFLib.PDFDocument.load(extractFileData, { ignoreEncryption: true });
+    const maxPages = srcDoc.getPageCount();
+    const parsed = parseRanges(pagesStr, maxPages);
+    if (!parsed) { toast('Invalid page selection.', 'error'); throw new Error('Invalid pages'); }
+
+    const newDoc = await PDFLib.PDFDocument.create();
+    const indices = parsed.map(p => p - 1); // 0-based
+    const pages = await newDoc.copyPages(srcDoc, indices);
+    pages.forEach(p => newDoc.addPage(p));
+    setProgress(50);
+
+    const bytes = await newDoc.save();
+    setProgress(100);
+
+    const label = parsed.length === 1 ? `page-${parsed[0]}` : `extracted-${parsed.length}-pages`;
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    downloadBlob(blob, `${label}.pdf`);
+    toast(`Extracted ${parsed.length} page${parsed.length>1?'s':''}.`, 'success');
+  } catch(e) {
+    if (e.message !== 'Invalid pages') toast(`Extract failed: ${e.message}`, 'error');
+  } finally {
+    hideProgress();
+    $('#btnExtract').disabled = false;
+    $('#btnExtract').textContent = 'Extract & Download';
+  }
+}
+
+// ── Premium: Compress PDF ──
+async function compressPDF() {
+  if (!isPremium) { showPremiumModal(); return; }
+  if (!compressFileData) { toast('Upload a PDF first.', 'error'); return; }
+
+  showProgress();
+  setProgress(10);
+  $('#btnCompress').disabled = true;
+  $('#btnCompress').textContent = '⏳ Compressing...';
+  const origSize = compressFileData.byteLength;
+  $('#compressOriginal').textContent = fmtSize(origSize);
+
+  try {
+    // Load and re-save: pdf-lib optimizes the structure on save
+    const srcDoc = await PDFLib.PDFDocument.load(compressFileData, { ignoreEncryption: true });
+    setProgress(40);
+
+    // Remove unused objects if possible (pdf-lib does some cleanup on save)
+    // We'll also try to set producer metadata etc.
+    srcDoc.setCreator('PDFMerge Pro');
+    setProgress(60);
+
+    const bytes = await srcDoc.save({ useObjectStreams: true });
+    setProgress(90);
+
+    const newSize = bytes.byteLength;
+    $('#compressResult').textContent = fmtSize(newSize);
+    $('#compressInfo').style.display = 'block';
+
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const pct = origSize > 0 ? ((1 - newSize/origSize)*100).toFixed(1) : 0;
+    downloadBlob(blob, 'compressed.pdf');
+
+    if (newSize < origSize) {
+      toast(`Compressed: ${fmtSize(origSize)} → ${fmtSize(newSize)} (${pct}% smaller)`, 'success');
+    } else {
+      toast(`Saved: ${fmtSize(newSize)} (no significant reduction — PDF may already be optimized)`, 'success');
+    }
+    setProgress(100);
+  } catch(e) {
+    toast(`Compress failed: ${e.message}`, 'error');
+  } finally {
+    hideProgress();
+    $('#btnCompress').disabled = false;
+    $('#btnCompress').textContent = 'Compress & Download';
+  }
+}
+
+// ── Premium Modal ──
+function showPremiumModal() { $('#premiumModal').style.display = 'flex'; }
+function hidePremiumModal() { $('#premiumModal').style.display = 'none'; }
+
+function purchasePremium() {
+  // Simulate purchase — in production, integrate Stripe/Paddle
+  isPremium = true;
+  unlockPremiumFeatures();
+  hidePremiumModal();
+  toast('🎉 Premium unlocked! All features are now available.', 'success');
+  $('#premiumBadge').textContent = '★ PRO';
+  $('#premiumBadge').style.background = 'linear-gradient(135deg, #3fb950, #56d364)';
+}
+
+function unlockPremiumFeatures() {
+  // Remove overlays and enable inputs
+  ['split','extract','compress'].forEach(tab => {
+    const overlay = $(`#${tab}Overlay`);
+    const card = $(`#${tab}Card`);
+    if (overlay) overlay.remove();
+    if (card) card.classList.remove('locked');
+  });
+
+  // Enable locked inputs
+  $('#splitRanges').disabled = false;
+  $('#extractPages').disabled = false;
+
+  // Update locked tabs styling
+  $$('.locked-tab').forEach(t => t.classList.remove('locked-tab'));
+}
+
+// ── Event Listeners ──
+
+// Dropzone for merge
+const dropzone = $('#dropzone');
+const fileInput = $('#fileInput');
+
+dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('dragover'); });
+dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  addFiles(e.dataTransfer.files);
+});
+fileInput.addEventListener('change', () => {
+  addFiles(fileInput.files);
+  fileInput.value = '';
+});
+
+// Premium tool dropzones
+function setupPremiumDropzone(dropzoneId, inputId, onLoad) {
+  const dz = document.getElementById(dropzoneId);
+  const inp = document.getElementById(inputId);
+  if (!dz || !inp) return;
+
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault();
+    dz.classList.remove('dragover');
+    if (!isPremium) { showPremiumModal(); return; }
+    handlePremiumFile(e.dataTransfer.files[0], onLoad, dz);
+  });
+  inp.addEventListener('change', () => {
+    if (!isPremium) { showPremiumModal(); inp.value=''; return; }
+    handlePremiumFile(inp.files[0], onLoad, dz);
+    inp.value = '';
+  });
+}
+
+async function handlePremiumFile(file, onLoad, dropzoneEl) {
+  if (!file) return;
+  if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+    toast('Please select a PDF file.', 'error'); return;
+  }
+  try {
+    const data = await file.arrayBuffer();
+    const pdfDoc = await PDFLib.PDFDocument.load(data, { ignoreEncryption: true });
+    const pages = pdfDoc.getPageCount();
+    onLoad(data, file.name, pages);
+    if (dropzoneEl) {
+      dropzoneEl.querySelector('.dropzone-text').textContent = `✅ ${file.name}`;
+      dropzoneEl.querySelector('.dropzone-sub').textContent = `${pages} page${pages!==1?'s':''} · ${fmtSize(data.byteLength)}`;
+      dropzoneEl.style.borderColor = 'var(--green)';
+      dropzoneEl.style.background = 'var(--green-bg)';
+    }
+  } catch(e) {
+    toast(`Failed to read PDF: ${e.message}`, 'error');
+  }
+}
+
+setupPremiumDropzone('dropzoneSplit', 'splitFileInput', (data, name, pages) => {
+  splitFileData = data;
+  $('#splitRanges').disabled = !isPremium;
+  $('#btnSplit').disabled = !isPremium;
+  $('#splitRanges').placeholder = `1-${pages}`;
+});
+
+setupPremiumDropzone('dropzoneExtract', 'extractFileInput', (data, name, pages) => {
+  extractFileData = data;
+  $('#extractPages').disabled = !isPremium;
+  $('#btnExtract').disabled = !isPremium;
+  $('#extractPages').placeholder = `e.g. 1, 3, 5-${Math.min(7,pages)}`;
+});
+
+setupPremiumDropzone('dropzoneCompress', 'compressFileInput', (data, name, pages) => {
+  compressFileData = data;
+  $('#btnCompress').disabled = !isPremium;
+  $('#compressOriginal').textContent = fmtSize(data.byteLength);
+  $('#compressResult').textContent = '—';
+  $('#compressInfo').style.display = 'block';
+});
+
+// Keyboard shortcut for modal
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') hidePremiumModal();
+});
+
+// ── Initial Render ──
+renderMergeList();
+
+// ── Check for premium state in localStorage ──
+if (localStorage.getItem('pdfmerge-pro-premium') === 'true') {
+  isPremium = true;
+  unlockPremiumFeatures();
+  $('#premiumBadge').textContent = '★ PRO';
+  $('#premiumBadge').style.background = 'linear-gradient(135deg, #3fb950, #56d364)';
+}
+
+// Persist premium on purchase
+const origPurchase = purchasePremium;
+purchasePremium = function() {
+  origPurchase();
+  localStorage.setItem('pdfmerge-pro-premium', 'true');
+};
+
+console.log('%c📄 PDFMerge Pro %cready',
+  'font-weight:bold;font-size:1.1em;color:#58a6ff',
+  'color:#8b949e');
+console.log('%cAll processing done client-side. Your files never leave your device.',
+  'color:#8b949e;font-size:0.85em');
+</script>
+
+</body>
+</html>
